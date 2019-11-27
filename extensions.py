@@ -24,3 +24,15 @@ def inter_fold(model, args, meta_support):
         meta_proto = torch.mm(soft_labels.permute((1, 0)), current_ex)
         meta_protos.append(meta_proto)
     return torch.tensor(meta_protos)
+
+def slice_data(data, num_ways, num_support, num_slices):
+    labels = torch.arange(num_ways).repeat(num_support)
+    p = int(num_ways * num_support / num_slices)
+    sliced_labels = labels * num_slices
+    for i in range(0, num_slices):
+        sliced_labels[i * p:(i + 1) * p] = sliced_labels[i * p:(i + 1) * p] + i
+
+
+
+    return sliced_data, sliced_labels
+
