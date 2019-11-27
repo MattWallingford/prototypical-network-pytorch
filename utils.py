@@ -74,3 +74,7 @@ def pprint(x):
 def l2_loss(pred, label):
     return ((pred - label)**2).sum() / len(pred) / 2
 
+def log_settings(args):
+    f = open(os.path.join(args.save_path,"hyperSettings.txt"), "w")
+    f.write(str(args))
+    f.close()
