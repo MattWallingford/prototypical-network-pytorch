@@ -1,7 +1,7 @@
 import argparse
 import os
 
-def TrainOptions():
+class TrainOptions():
     def __init__(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--max-epoch', type=int, default=200)
@@ -19,6 +19,7 @@ def TrainOptions():
         parser.add_argument('--folds', type=int, default=2)
         parser.add_argument('--lam', type=int, default=0)
         parser.add_argument('--num_slices', type=int, default=1)
+        parser.add_argument('--batch_size', type=int, default=100)
         self.parser = parser
 
     def parse_args(self):

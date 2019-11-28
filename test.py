@@ -20,7 +20,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     pprint(vars(args))
 
-    set_gpu(args.gpu)
+    #set_gpu(args.gpu)
 
     dataset = MiniImageNet('test')
     sampler = CategoriesSampler(dataset.label,
@@ -29,6 +29,7 @@ if __name__ == '__main__':
                         num_workers=8, pin_memory=True)
 
     model = Convnet().cuda()
+    #model = torch.nn.DataParallel(model)
     model.load_state_dict(torch.load(args.load))
     model.eval()
 
