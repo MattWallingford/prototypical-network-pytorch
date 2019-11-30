@@ -20,7 +20,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     pprint(vars(args))
 
-    #set_gpu(args.gpu)
+    set_gpu(args.gpu)
 
     dataset = MiniImageNet('test')
     sampler = CategoriesSampler(dataset.label,
@@ -52,6 +52,6 @@ if __name__ == '__main__':
         acc = count_acc(logits, label)
         ave_acc.add(acc)
         print('batch {}: {:.2f}({:.2f})'.format(i, ave_acc.item() * 100, acc * 100))
-        
+
         x = None; p = None; logits = None
 
