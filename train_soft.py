@@ -59,29 +59,21 @@ if __name__ == '__main__':
 
         tl = Averager()
         ta = Averager()
-        lam1 = 1
-        lam2 = 0.1
+        lam = .01
         for i, batch in enumerate(train_loader, 1):
             data, _ = [_.cuda() for _ in batch]
             p = args.shot * args.train_way
             q = args.query * args.train_way
-            meta_support, data_query = data[:args.folds * p], data[args.folds * p:args.folds * p + q]
-            prev_proto_feats = model(meta_support[:p])
-            prev_proto2 = prev_proto_feats.reshape(args.shot, args.train_way, -1).mean(dim=0)
+            support, data_query = data[:p], data[p:]
+            features = model(support)
+            proto = features.reshape(args.shot, args.train_way, -1).mean(dim=0)
 
-            proto2_feats = model(meta_support[p*1:p*(1+1)])
-            meta_logits2 = euclidean_metric(proto2_feats, prev_proto2)
-            soft_labels2 = (F.softmax(meta_logits2, dim=1) + lam1* s_onehot) / (1 + lam1)
-            soft_labels_norm2 = soft_labels2 / soft_labels2.sum(dim=0)
-            proto2 = torch.mm(soft_labels_norm2.permute((1, 0)), proto2_feats)
+            meta_logits = euclidean_metric(features, proto)
+            soft_labels = (F.sigmoid(meta_logits, dim=1) + lam* s_onehot) / (1 + lam)
+            #soft_labels = soft_labels / soft_labels.sum(dim=0)
+            meta_proto = torch.mm(soft_labels.permute((1, 0)), proto)
+            proto.retain_grad()
 
-            proto3 = model(meta_support[p * 2:p * (2 + 1)])
-            meta_logits3 = euclidean_metric(proto3, proto2)
-            soft_labels3 = (F.softmax(meta_logits3, dim=1) + lam2* s_onehot) / (1 + lam2)
-            soft_labels_norm3 = soft_labels3 / soft_labels3.sum(dim=0)
-            proto3 = torch.mm(soft_labels_norm3.permute((1, 0)), proto3)
-            proto3.retain_grad()
-            prev_proto2.retain_grad()
 
 
             # soft_labels = (F.softmax(meta_logits, dim=1))  # * lam + s_onehot) / (1 + lam)
@@ -91,7 +83,7 @@ if __name__ == '__main__':
 
             label = torch.arange(args.train_way).repeat(args.query)
             label = label.type(torch.cuda.LongTensor)
-            logits = euclidean_metric(model(data_query), proto3)
+            logits = euclidean_metric(model(data_query), meta_proto)
             loss = F.cross_entropy(logits, label)
             acc = count_acc(logits, label)
             print('epoch {}, train {}/{}, loss={:.4f} acc={:.4f}'
