@@ -29,6 +29,7 @@ if __name__ == '__main__':
                         num_workers=8, pin_memory=True)
 
     model = Convnet().cuda()
+    #model = torch.nn.DataParallel(model)
     model.load_state_dict(torch.load(args.load))
     model.eval()
 
@@ -51,6 +52,6 @@ if __name__ == '__main__':
         acc = count_acc(logits, label)
         ave_acc.add(acc)
         print('batch {}: {:.2f}({:.2f})'.format(i, ave_acc.item() * 100, acc * 100))
-        
+
         x = None; p = None; logits = None
 

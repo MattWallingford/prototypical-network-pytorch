@@ -38,7 +38,7 @@ if __name__ == '__main__':
     for i, batch in enumerate(loader, 1):
         data, _ = [_.cuda() for _ in batch]
         k = args.way * args.shot
-        data_shot,data_fold, data_query = data[:k], data[k:]
+        data_shot, data_query = data[:k], data[k:]
 
         #p = inter_fold(model, args, data_shot)
         x = model(data_shot)

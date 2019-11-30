@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -10,6 +9,7 @@ from mini_imagenet import MiniImageNet
 from samplers import CategoriesSampler
 from convnet import Convnet
 from utils import pprint, set_gpu, ensure_path, Averager, Timer, count_acc, euclidean_metric, log_settings
+from extensions import inter_fold
 
 if __name__ == '__main__':
     parser = TrainOptions()
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     #noise = torch.distributions.Normal(loc=0, scale=.02)
     trainset = MiniImageNet('train')
     train_sampler = CategoriesSampler(trainset.label, 100,
-                                      args.train_way, args.folds * args.shot + args.query)
+                                      args.train_way, args.shot + args.query)
     train_loader = DataLoader(dataset=trainset, batch_sampler=train_sampler,
                               num_workers=args.num_workers, pin_memory=True)
 
@@ -61,16 +61,20 @@ if __name__ == '__main__':
             p = args.shot * args.train_way
             data_shot, data_query = data[:p], data[p:]
 
-            proto = model(data_shot)
-            proto = proto.reshape(int(args.shot/args.num_slices), args.num_slices*args.train_way, -1).mean(dim=0)
-
-            label = torch.arange(args.num_slices*args.train_way).repeat(int(args.query/args.num_slices))
-            label = label.type(torch.cuda.LongTensor)
+            proto = inter_fold(model, args, data_shot)
+            #proto = model(data_shot)
+            proto = proto.reshape(int(args.shot), args.train_way, -1).mean(dim=0)
 
             logits = euclidean_metric(model(data_query), proto)
             loss = F.cross_entropy(logits, label)
             acc = count_acc(logits, label)
 
+            # proto = proto.reshape(args.shot, args.train_way, -1).mean(dim=0)
+            label = torch.arange(args.num_slices*args.train_way).repeat(int(args.query/args.num_slices))
+            label = label.type(torch.cuda.LongTensor)
+            logits = euclidean_metric(model(data_query), proto)
+            loss = F.cross_entropy(logits, label)
+            acc = count_acc(logits, label)
             print('epoch {}, train {}/{}, loss={:.4f} acc={:.4f}'
                   .format(epoch, i, len(train_loader), loss.item(), acc))
 
