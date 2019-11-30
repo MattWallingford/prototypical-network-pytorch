@@ -40,10 +40,10 @@ if __name__ == '__main__':
         k = args.way * args.shot
         data_shot,data_fold, data_query = data[:k], data[k:]
 
-        p = inter_fold(model, args, data_shot)
-        #x = model(data_shot)
-        #x = x.reshape(args.shot, args.way, -1).mean(dim=0)
-        #p = x
+        #p = inter_fold(model, args, data_shot)
+        x = model(data_shot)
+        x = x.reshape(args.shot, args.way, -1).mean(dim=0)
+        p = x
 
         logits = euclidean_metric(model(data_query), p)
 
