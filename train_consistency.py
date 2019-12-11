@@ -8,7 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torchvision
 import numpy as np
 
-from mini_imagenet import MiniImageNet
+from mini_imagenet import MiniImageNet, SSMiniImageNet
 from samplers import CategoriesSampler
 from convnet import Convnet
 from utils import pprint, set_gpu, ensure_path, Averager, Timer, count_acc, euclidean_metric
@@ -36,11 +36,17 @@ if __name__ == '__main__':
     writer = SummaryWriter()
     # noise_sample = torch.distributions.normal(loc=0, scale=.02)
     noise = torch.distributions.Normal(loc=0, scale=.02)
-    trainset = MiniImageNet('train')
-    train_sampler = CategoriesSampler(trainset.label, 100,
+    # trainset = MiniImageNet('train')
+    # train_sampler = CategoriesSampler(trainset.label, 100,
+    #                                   args.train_way, 2*args.shot + args.query)
+    # train_loader = DataLoader(dataset=trainset, batch_sampler=train_sampler,
+    #                           num_workers=args.num_workers, pin_memory=True)
+
+    ssdata = SSMiniImageNet()
+    ss_sampler = CategoriesSampler(ssdata.slabel, 100,
                                       args.train_way, 2*args.shot + args.query)
-    train_loader = DataLoader(dataset=trainset, batch_sampler=train_sampler,
-                              num_workers=args.num_workers, pin_memory=True)
+    ss_loader = DataLoader(dataset=ssdata, batch_sampler=ss_sampler,
+                                num_workers=args.num_workers, pin_memory=True)
 
     valset = MiniImageNet('val')
     val_sampler = CategoriesSampler(valset.label, 400,
@@ -76,8 +82,8 @@ if __name__ == '__main__':
         tl = Averager()
         ta = Averager()
 
-        for i, batch in enumerate(train_loader, 1):
-            data, _ = [_.cuda() for _ in batch]
+        for i, batch in enumerate(ss_loader, 1):
+            data,_, udata, _ = [_.cuda() for _ in batch]
             p = args.shot * args.train_way
             m = args.meta_size * args.train_way
             q = args.query * args.train_way
@@ -96,15 +102,16 @@ if __name__ == '__main__':
             #proto = torch.mm(soft_labels.permute((1, 0)), proto)
 
             # proto = proto.reshape(args.shot, args.train_way, -1).mean(dim=0)
-            label = torch.arange(args.train_way).repeat(args.query)
-            label = label.type(torch.cuda.LongTensor)
-            logits = euclidean_metric(model(data_query), proto)
-            logits2 = euclidean_metric(model(data_query), meta_proto)
+            #label = torch.arange(args.train_way).repeat(args.query)
+            #label = label.type(torch.cuda.LongTensor)
+            logits = euclidean_metric(model(udata), proto)
+            logits2 = euclidean_metric(model(udata), meta_proto)
             #loss = F.binary_cross_entropy_with_logits(logits, q_onehot)
-            loss = lam_labs*F.cross_entropy(euclidean_metric(model(data_query), proto), label) + lam_labs*F.cross_entropy(logits2, label) + lam * F.kl_div(F.log_softmax(logits, dim=1), F.softmax(logits2, dim=1))
+            #loss = lam_labs*F.cross_entropy(euclidean_metric(model(data_query), proto), label) + lam_labs*F.cross_entropy(logits2, label) + lam * F.kl_div(F.log_softmax(logits, dim=1), F.softmax(logits2, dim=1))
+            loss = F.kl_div(F.log_softmax(logits, dim=1), F.softmax(logits2, dim=1))
             acc = count_acc(logits, label)
             print('epoch {}, train {}/{}, loss={:.4f} acc={:.4f}'
-                  .format(epoch, i, len(train_loader), loss.item(), acc))
+                  .format(epoch, i, len(ss_loader), loss.item(), acc))
             tl.add(loss.item())
             ta.add(acc)
             optimizer.zero_grad()
