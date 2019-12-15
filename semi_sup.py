@@ -81,19 +81,20 @@ if __name__ == '__main__':
     #acc_label = label.type(torch.cuda.LongTensor)
     #q_onehot = torch.zeros(label.size(0), 20)
     #q_onehot = q_onehot.scatter_(1, label.unsqueeze(dim=1), 1).cuda()
-    lam = 0
-    increment = 2/args.max_epoch
+    lam = 1
+    increment = 1/args.max_epoch
     for epoch in range(args.start_epoch, args.max_epoch + 1):
-        lam += increment
         lr_scheduler.step()
-
+        #if epoch > 100:
+            #lam = 1
         model.train()
 
         tl = Averager()
         ta = Averager()
 
         for i, batch in enumerate(ss_loader, 1):
-            data,_, udata, _ = [_.cuda() for _ in batch]
+            data,udata = batch#[_.cuda() for _ in batch]
+            data = data.cuda()
             p = args.shot * args.train_way
             m = args.meta_size * args.train_way
             q = args.query * args.train_way
@@ -110,6 +111,7 @@ if __name__ == '__main__':
             #load unsupervised
             q = args.uquery * args.train_way
             udata_query = udata
+            udata_query = udata_query.cuda()
             ulogits1 = euclidean_metric(model(udata_query), proto)
             ulogits2 = euclidean_metric(model(udata_query), proto2)
 
