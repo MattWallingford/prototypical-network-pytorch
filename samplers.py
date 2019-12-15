@@ -26,7 +26,42 @@ class CategoriesSampler():
             for c in classes:
                 l = self.m_ind[c]
                 pos = torch.randperm(len(l))[:self.n_per]
-                batch.append(l[pos])
+                batch.append (l[pos])
             batch = torch.stack(batch).t().reshape(-1)
             yield batch
 
+
+class SSCategoriesSampler():
+
+    def __init__(self, sup_label, us_label, n_batch, n_cls, n_per):
+        self.n_batch = n_batch
+        self.n_cls = n_cls
+        self.n_per = n_per
+
+        sup_label = np.array(sup_label)
+        us_label = np.array(us_label)
+        self.m_ind = []
+        for i in range(max(sup_label) + 1):
+            ind = np.argwhere(sup_label == i).reshape(-1)
+            ind = torch.from_numpy(ind)
+            self.m_ind.append(ind)
+
+        for i in range(max(us_label) + 1):
+            ind = np.argwhere(us_label == i).reshape(-1)
+            ind = torch.from_numpy(ind)
+            self.m_ind.append(ind)
+
+
+    def __len__(self):
+        return self.n_batch
+
+    def __iter__(self):
+        for i_batch in range(self.n_batch):
+            batch = []
+            classes = torch.randperm(len(self.m_ind))[:self.n_cls]
+            for c in classes:
+                l = self.m_ind[c]
+                pos = torch.randperm(len(l))[:self.n_per]
+                batch.append(l[pos])
+            batch = torch.stack(batch).t().reshape(-1)
+            yield batch
