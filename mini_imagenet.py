@@ -93,9 +93,6 @@ class SSMiniImageNet(Dataset):
         ulabel = []
         lb = -1
 
-
-
-
         self.wnids = []
         self.wnid_lab = dict()
 
@@ -141,6 +138,7 @@ class SSMiniImageNet(Dataset):
         return len(self.data)
 
     def __getitem__(self, i):
+
         #u_index = random.randint(0, len(self.udata) - 1)
         path, label = self.sdata[i], self.slabel[i]
         idxs = self.m_ind[label]
