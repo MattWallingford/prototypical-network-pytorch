@@ -130,7 +130,6 @@ class SSMiniImageNet(Dataset):
         return len(self.data)
 
     def __getitem__(self, i):
-        i = i[0]
         u_index = random.randint(0, len(self.udata) - 1)
         path, label = self.sdata[i], self.slabel[i]
         upath, ulabel = self.udata[u_index], self.ulabel[u_index]
