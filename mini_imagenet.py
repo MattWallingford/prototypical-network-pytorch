@@ -93,23 +93,29 @@ class SSMiniImageNet(Dataset):
         ulabel = []
         lb = -1
 
+
+
+
         self.wnids = []
+        self.wnid_lab = dict()
 
         for l in slines:
             name, wnid = l.split(',')
             path = osp.join(ROOT_PATH, 'images', name)
             if wnid not in self.wnids:
-                self.wnids.append(wnid)
                 lb += 1
+                self.wnid_lab[wnid] = lb
+                self.wnids.append(wnid)
             sdata.append(path)
             slabel.append(lb)
 
         for l in ulines:
             name, wnid = l.split(',')
             path = osp.join(ROOT_PATH, 'images', name)
-            if wnid not in self.wnids:
-                self.wnids.append(wnid)
-                lb += 1
+            # if wnid not in self.wnids:
+            #     self.wnids.append(wnid)
+            #     lb += 1
+            lb = self.wnid_lab[wnid]
             udata.append(path)
             ulabel.append(lb)
 
@@ -117,6 +123,11 @@ class SSMiniImageNet(Dataset):
         self.slabel = slabel
         self.udata = udata
         self.ulabel = ulabel
+
+        for i in range(max(self.ulabel) + 1):
+            ind = np.argwhere(self.ulabel == i).reshape(-1)
+            ind = torch.from_numpy(ind)
+            self.m_ind.append(ind)
 
         self.transform = transforms.Compose([
             transforms.Resize(84),
@@ -130,9 +141,11 @@ class SSMiniImageNet(Dataset):
         return len(self.data)
 
     def __getitem__(self, i):
-        i = i[0]
-        u_index = random.randint(0, len(self.udata) - 1)
+        #u_index = random.randint(0, len(self.udata) - 1)
         path, label = self.sdata[i], self.slabel[i]
+        idxs = self.m_ind[label]
+        u_index = np.random.choice(len(idxs))
+
         upath, ulabel = self.udata[u_index], self.ulabel[u_index]
         image = self.transform(Image.open(path).convert('RGB'))
         uimage = self.transform(Image.open(upath).convert('RGB'))
