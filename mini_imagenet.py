@@ -122,7 +122,7 @@ class SSMiniImageNet(Dataset):
         self.sdata = sdata
         self.slabel = slabel
         self.udata = udata
-        self.ulabel = ulabel
+        self.ulabel = np.array(ulabel)
 
         for i in range(max(self.ulabel) + 1):
             ind = np.argwhere(self.ulabel == i).reshape(-1)
