@@ -121,6 +121,7 @@ class SSMiniImageNet(Dataset):
         self.udata = udata
         self.ulabel = np.array(ulabel)
 
+        self.m_ind = []
         for i in range(max(self.ulabel) + 1):
             ind = np.argwhere(self.ulabel == i).reshape(-1)
             ind = torch.from_numpy(ind)
@@ -143,9 +144,9 @@ class SSMiniImageNet(Dataset):
         path, label = self.sdata[i], self.slabel[i]
         idxs = self.m_ind[label]
         u_index = np.random.choice(len(idxs))
-
         upath, ulabel = self.udata[u_index], self.ulabel[u_index]
         image = self.transform(Image.open(path).convert('RGB'))
+        print(label, ulabel)
         uimage = self.transform(Image.open(upath).convert('RGB'))
         return image, uimage
 
