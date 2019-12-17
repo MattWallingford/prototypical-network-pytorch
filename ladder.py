@@ -115,8 +115,7 @@ if __name__ == '__main__':
             agree = torch.argmax(ulogits1, dim = 1) == torch.argmax(ulogits2, dim = 1)
             #loss_const = F.kl_div(F.log_softmax(ulogits1, dim=1), F.softmax(ulogits2, dim=1))
             feats =model(data_query)
-            loss =  F.cross_entropy(euclidean_metric(feats, proto2), label) + lam * F.kl_div(F.log_softmax(ulogits1[agree], dim=1), F.softmax(ulogits2[agree], dim=1)) #+ lam_labs*F.cross_entropy(logits2, label) + lam * F.kl_div(F.log_softmax(logits, dim=1), F.softmax(logits2, dim=1))
-            acc = count_acc(logits, label)
+            loss =  F.cross_entropy(euclidean_metric(feats, proto2), label) + lam * F.kl_div(F.log_softmax(ulogits1[agree], dim=1), F.softmax(ulogits2[agree], dim=1))
             print('epoch {}, train {}/{}, loss={:.4f} acc={:.4f}'
                   .format(epoch, i, len(ss_loader), loss.item(), acc))
             tl.add(loss.item())
