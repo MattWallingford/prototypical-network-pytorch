@@ -77,6 +77,20 @@ def splitImageNet(sup_ratio):
     df[~msk].to_csv(unsup_path)
     df[msk].to_csv(sup_path)
 
+def splitIm(splits):
+    setname = 'train'
+    csv_path = osp.join(ROOT_PATH, setname + '.csv')
+    df = pd.read_csv(csv_path)
+    df_np = np.array(df)
+    np.random.shuffle(df_np)
+    s_df = pd.DataFrame(df_np)
+    increment = int(len(df)/splits)
+    for i in range(splits-1):
+        d_i = s_df.iloc[increment*i: increment*(i+1)]
+        d_i.to_csv(osp.join(ROOT_PATH, setname + str(i)))
+    d_i = s_df.iloc[increment*(splits-1):]
+    d_i.to_csv(osp.join(ROOT_PATH, setname + str(splits)))
+
 
 class SSMiniImageNet(Dataset):
     def __init__(self):
@@ -143,10 +157,10 @@ class SSMiniImageNet(Dataset):
         #u_index = random.randint(0, len(self.udata) - 1)
         path, label = self.sdata[i], self.slabel[i]
         idxs = self.m_ind[label]
-        u_index = np.random.choice(len(idxs))
+        u_index = np.random.choice(idxs)
         upath, ulabel = self.udata[u_index], self.ulabel[u_index]
+
         image = self.transform(Image.open(path).convert('RGB'))
-        print(label, ulabel)
         uimage = self.transform(Image.open(upath).convert('RGB'))
         return image, uimage
 
